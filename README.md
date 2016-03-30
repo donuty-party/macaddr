@@ -4,7 +4,7 @@ Functions for working with IEEE 802 MAC addresses and Organizationally Unique Id
 
 ## Documentation
 
-See your participating http://donuty-party.github.io/macaddr/doc/api-reference.html for details.
+http://donuty-party.github.io/macaddr/doc/api-reference.html
 
 ## Installation
 
