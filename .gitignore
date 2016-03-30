@@ -3,5 +3,4 @@
 /ebin
 /deps
 erl_crash.dump
-/doc
 mix.lock

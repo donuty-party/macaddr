@@ -6,7 +6,7 @@ defmodule MACAddr do
   
   MACAddr represents MAC addresses and OUIs as binaries. Except where noted, MAC addresses and OUIs can be used interchangeably throughout the module.
   
-  ## Speaking of OUIs
+  ## Speaking of OUIs…
   
   The most significant 24 bits of a MAC address is only an OUI when the address's U/L bit is zero, signifying that the address is globally unique. MACAddr provides functions, `MACAddr.is_globally_unique?/1` and `MACAddr.is_locally_administered?/1`, to test the U/L bit, but otherwise ignores it. If a MAC address is locally administered, what this module considers an OUI is really just the most significant 24 bits of the address.
   
