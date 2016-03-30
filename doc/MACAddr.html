@@ -70,7 +70,7 @@
           <p>Functions for working with IEEE 802 MAC addresses and Organizationally Unique Identifiers (OUIs).</p>
 <h2>Representation</h2>
 <p>MACAddr represents MAC addresses and OUIs as binaries. Except where noted, MAC addresses and OUIs can be used interchangeably throughout the module.</p>
-<h2>Speaking of OUIs</h2>
+<h2>Speaking of OUIs…</h2>
 <p>The most significant 24 bits of a MAC address is only an OUI when the address’s U/L bit is zero, signifying that the address is globally unique. MACAddr provides functions, <a href="MACAddr.html#is_globally_unique?/1"><code class="inline">MACAddr.is_globally_unique?/1</code></a> and <a href="MACAddr.html#is_locally_administered?/1"><code class="inline">MACAddr.is_locally_administered?/1</code></a>, to test the U/L bit, but otherwise ignores it. If a MAC address is locally administered, what this module considers an OUI is really just the most significant 24 bits of the address.</p>
 
         </section>
