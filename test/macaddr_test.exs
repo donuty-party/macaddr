@@ -1,8 +1,0 @@
-defmodule MACAddrTest do
-  use ExUnit.Case
-  doctest MACAddr
-
-  test "the truth" do
-    assert 1 + 1 == 2
-  end
-end
