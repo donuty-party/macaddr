@@ -7,5 +7,5 @@
 Add macaddr to your list of dependencies in `mix.exs`:
 
     def deps do
-      [{:plug, github: "donuty-party/macaddr"}]
+      [{:macaddr, github: "donuty-party/macaddr"}]
     end
