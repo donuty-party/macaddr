@@ -1,14 +1,37 @@
 defmodule MACAddr do
   @moduledoc """
-  Functions for working with IEEE 802 MAC addresses and Organizationally Unique Identifiers (OUIs).
+  Functions for working with IEEE 802 MAC addresses.
   
   ## Representation
   
-  MACAddr represents MAC addresses and OUIs as binaries. Except where noted, MAC addresses and OUIs can be used interchangeably throughout the module.
+  MACAddr represents MAC addresses and Organizationally Unique Identifiers (OUIs) as 24- and 48-bit binaries, respectively. Except where noted, MAC addresses and OUIs can be used interchangeably throughout the module:
   
-  ## Speaking of OUIs…
+      iex> addr = MACAddr.parse("C0-91-34-0B-DE-D4")
+      <<192, 145, 52, 11, 222, 212>>
+      iex> MACAddr.to_string(addr)
+      "C0-91-34-0B-DE-D4"
+      
+      iex> oui = MACAddr.parse("C0-91-34")
+      <<192, 145, 52>>
+      iex> MACAddr.to_string(oui)
+      "C0-91-34"
   
-  The most significant 24 bits of a MAC address is only an OUI when the address's U/L bit is zero, signifying that the address is globally unique. MACAddr provides functions, `MACAddr.is_globally_unique?/1` and `MACAddr.is_locally_administered?/1`, to test the U/L bit, but otherwise ignores it. If a MAC address is locally administered, what this module considers an OUI is really just the most significant 24 bits of the address.
+  ## Organizationally Unique Identifiers
+
+  MAC addresses can be administered universally or locally. A universally administered address is assigned to a device by its manufacturer, and the most significant half of the address constitutes an organizationally unique identifier (OUI), identifying the manufacturer. For example, 00-15-9A-68-99-3A is a universally administered address. 00-15-9A is its OUI, and identifies the manufacturer as Arris Group, Inc.
+  
+  A locally administered address is typically assigned to a device by its administrator, and the most significant half of the address doesn't constitute an OUI. AE-F5-01-9B-2E-5B is a locally administered address, and AE-F5-01 has no specific meaning as a whole.
+  
+  A MAC address is identified as universal or local by its Universal/Local (U/L) bit, which is the second-least significant bit of its most significant byte. If the U/L bit is 0, the address is universally administered; if it's 1, the address is locally administered.
+  
+  Functions like `MACAddr.oui/1` and `MACAddr.is_local?/1` distinguish between universally and locally administered addresses, but you can still work with any 24-bit value as though it were an OUI:
+  
+      iex> addr = MACAddr.parse("AE-F5-01-9B-2E-5B")
+      <<174, 245, 1, 155, 46, 91>>
+      iex> upper_half = MACAddr.most_significant_24_bits(addr)
+      <<174, 245, 1>>
+      iex> MACAddr.to_string(upper_half)
+      "AE-F5-01"
   
   """
   
@@ -36,13 +59,9 @@ defmodule MACAddr do
       iex> MACAddr.split(addr, 16)
       [5615, 11921, 38778]
       
-  **Note:** We can't split an OUI evenly into 16-bit chunks, so this won't work:
+  **Note:** We can't split an OUI or other 24-bit value evenly into 16-bit chunks, so this won't work:
       
-      iex> oui = MACAddr.parse("FF-FF-FF")
-      <<255, 255, 255>>
-      
-      iex> MACAddr.split(oui, 16)
-      
+      iex> "FF-FF-FF"|> MACAddr.parse |> MACAddr.split(16)
       ** (FunctionClauseError) no function clause matching in MACAddr.split/2
           (macaddr) lib/macaddr.ex:32: MACAddr.split(<<255, 255, 255>>, 16)
   
@@ -153,11 +172,10 @@ defmodule MACAddr do
       iex> MACAddr.format_as(addr, :cisco)
       "15ef.2e91.977a"
       
-  **Note:** Cisco style doesn't work for OUIs:
+  **Note:** Cisco style doesn't work for OUIs or other 24-bit values:
   
       iex> oui = MACAddr.parse("FF-FF-FF")
       <<255, 255, 255>>
-      
       iex> MACAddr.format_as(oui, :cisco)
       ** (FunctionClauseError) no function clause matching in MACAddr.split/2
           (macaddr) lib/macaddr.ex:39: MACAddr.split(<<255, 255, 255>>, 16)
@@ -224,7 +242,6 @@ defmodule MACAddr do
   
       iex> addr = MACAddr.from_integer(24117022660474)
       <<21, 239, 46, 145, 151, 122>>
-  
       iex> MACAddr.format_as(addr, :cisco)
       "15ef.2e91.977a"
       
@@ -232,7 +249,6 @@ defmodule MACAddr do
   
       iex> oui = MACAddr.from_integer(0x15ef23, 24)
       <<21, 239, 35>>
-      
       iex> MACAddr.to_string(oui)
       "15-EF-23"
   
@@ -252,7 +268,6 @@ defmodule MACAddr do
   
       iex> addr = MACAddr.random
       <<243, 5, 217, 191, 24, 15>>
-      
       iex> MACAddr.to_string(addr)
       "F3-05-D9-BF-18-0F"
   
@@ -262,23 +277,19 @@ defmodule MACAddr do
   end
   
   @doc """
-  Generates a random MAC address with the specified OUI.
+  Generates a random MAC address with the specified binary as the upper half.
   
   ## Examples
-  
-  Let's create a random MAC address with an OUI of 00-CD-FE:
-  
+    
       iex> oui = MACAddr.parse("00-CD-FE")
       <<0, 205, 254>>
-      
       iex> addr = MACAddr.random(oui)
       <<0, 205, 254, 109, 252, 6>>
-      
       iex> MACAddr.to_string(addr)
       "00-CD-FE-6D-FC-06"
   """
-  def random(oui) do
-    oui <> :crypto.strong_rand_bytes(3)
+  def random(upper_half) do
+    upper_half <> :crypto.strong_rand_bytes(3)
   end
   
   @doc """
@@ -313,7 +324,6 @@ defmodule MACAddr do
       
       iex> oui = MACAddr.parse("ventral beeswax")
       <<234, 190, 234>>
-      
       iex> MACAddr.to_string(oui)
       "EA-BE-EA"
   
@@ -330,22 +340,43 @@ defmodule MACAddr do
   end
   
   @doc """
-  Extracts the OUI, or the most significant 24 bits, of `addr`.
+  Extracts the most significant 24 bits of `addr`.
   
   ## Examples
   
       iex> addr = MACAddr.parse("15-EF-2E-91-97-7A")
       <<21, 239, 46, 145, 151, 122>>
-      
-      iex> oui = MACAddr.oui(addr)
+      iex> upper_half = MACAddr.most_significant_24_bits(addr)
       <<21, 239, 46>>
-      
-      iex> MACAddr.to_string(oui)
+      iex> MACAddr.to_string(upper_half)
       "15-EF-2E"
   """
-  def oui(addr) do
+  def most_significant_24_bits(addr) do
     <<oui::binary-3, _::binary>> = addr
     oui
+  end
+  
+  @doc """
+  If `addr` is universally administered, returns its OUI. Otherwise, returns `nil`.
+  
+  ## Examples
+  
+  Get the OUI of a universally administered address:
+  
+      iex> oui = "15-EF-2E-91-97-7A" |> MACAddr.parse |> MACAddr.oui
+      <<21, 239, 46>>
+      iex> MACAddr.to_string(oui)
+      "15-EF-2E"
+      
+  Try to get the OUI of a locally administered address:
+  
+      iex> "0B-EA-17-08-CD-31" |> MACAddr.parse |> MACAddr.oui
+      nil
+  """
+  def oui(addr) do
+    if is_universal?(addr) do
+      most_significant_24_bits(addr)
+    end
   end
   
   @doc """
@@ -369,62 +400,96 @@ defmodule MACAddr do
   
   ## Examples
   
-  F4-5C-89-E2-62-94 is a host (unicast) MAC address:
+  Is F4-5C-89-E2-62-94 a multicast address?
   
-      iex> MACAddr.parse("F4-5C-89-E2-62-94") |> MACAddr.is_multicast?
+      iex> "F4-5C-89-E2-62-94" |> MACAddr.parse |> MACAddr.is_multicast?
       false
   
-  01-80-C2-00-00-00 is the multicast MAC address for IEEE 802.1D Spanning Tree Protocol:
+  Is 01-80-C2-00-00-00 a multicast address?
   
-      iex> MACAddr.parse("01-80-C2-00-00-00") |> MACAddr.is_multicast?
+      iex> "01-80-C2-00-00-00" |> MACAddr.parse |> MACAddr.is_multicast?
       true
   
-  FF-FF-FF-FF-FF-FF is the broadcast address, and is also a multicast address:
+  Is the broadcast address a multicast address?
   
-      iex> MACAddr.parse("FF-FF-FF-FF-FF-FF") |> MACAddr.is_multicast?
+      iex> MACAddr.broadcast |> MACAddr.is_multicast?
       true
   """
   def is_multicast?(addr) do
-    <<msb::unsigned-8, _::binary>> = addr
-    band(msb, 0x01) == 0x01
+    ig_bit(addr) == 1
   end
   
   @doc """
   Determines if `addr` is a unicast address, based on its I/G bit.
   """
   def is_unicast?(addr) do
-    !is_multicast?(addr)
+    ig_bit(addr) == 0
   end
   
   @doc """
-  Determines if `addr` is globally unique (OUI enforced), based on its U/L bit.
+  The value of `addr`'s I/G bit. If its I/G bit is 0, `addr` is a unicast address. Otherwise, `addr` is a multicast address.
   
   ## Examples
   
-  F4-5C-89-E2-62-94 is a globally unique MAC address:
+      iex> addr = MACAddr.parse("F4-5C-89-E2-62-94")
+      <<244, 92, 137, 226, 98, 148>>
+      iex> MACAddr.ig_bit(addr) == 0 and MACAddr.is_unicast?(addr)
+      true
+  """
+  def ig_bit(addr) do
+    <<msb::unsigned-8, _::binary>> = addr
+    band(msb, 0x01)
+  end
   
-      iex> MACAddr.parse("F4-5C-89-E2-62-94") |> MACAddr.is_globally_unique?
+  @doc """
+  The value of `addr`'s U/L bit. If its U/L bit is 0, `addr` is a universally administered address. Otherwise, `addr` is a locally administered address.
+  
+  ## Examples
+  
+      iex> addr = MACAddr.parse("F4-5C-89-E2-62-94")
+      <<244, 92, 137, 226, 98, 148>>
+      iex> MACAddr.ul_bit(addr) == 0 and MACAddr.is_universal?(addr)
+      true
+  """
+  def ul_bit(addr) do
+    <<msb::unsigned-8, _::binary>> = addr
+    msb
+      |> band(0x02)
+      |> bsl(2)
+  end
+  
+  @doc """
+  Determines if `addr` is universally administered, based on its U/L bit.
+  
+  ## Examples
+  
+  Is F4-5C-89-E2-62-94 universally administered?
+  
+      iex> "F4-5C-89-E2-62-94"|> MACAddr.parse |> MACAddr.is_universal?
       true
   
-  4A-00-05-5A-46-15 is a locally administered MAC address:
+  Is 4A-00-05-5A-46-15 universally administered?
   
-      iex> MACAddr.parse("01-80-C2-00-00-00") |> MACAddr.is_globally_unique?
+      iex> "4A-00-05-5A-46-15" |> MACAddr.parse |> MACAddr.is_universal?
       false
   """
-  def is_globally_unique?(addr) do
-    <<msb::unsigned-8, _::binary>> = addr
-    band(msb, 0x02) == 0
+  def is_universal?(addr) do
+    ul_bit(addr) == 0
   end
-  
+
   @doc """
-  Determines if `addr` is locally administered (no OUI), based on its U/L bit.
+  Determines if `addr` is locally administered, based on its U/L bit.
   """
-  def is_locally_administered?(addr) do
-    !is_globally_unique?(addr)
+  def is_local?(addr) do
+    ul_bit(addr) == 1
   end
   
   @doc """
-  Returns the broadcast address, `<<255, 255, 255, 255, 255, 255>>`.
+  Returns the broadcast address:
+  
+      iex> MACAddr.broadcast |> MACAddr.to_string
+      "FF-FF-FF-FF-FF-FF"
+  
   """
   def broadcast, do: @broadcast_addr
   
@@ -437,10 +502,8 @@ defmodule MACAddr do
   
       iex> addr1 = MACAddr.random
       <<122, 67, 52, 228, 207, 143>>
-      
       iex> addr2 = MACAddr.add(addr1, 20)
       <<122, 67, 52, 228, 207, 163>>
-      
       iex> MACAddr.to_integer(addr2) - MACAddr.to_integer(addr1)
       20
       
@@ -448,10 +511,8 @@ defmodule MACAddr do
   
       iex> addr1 = MACAddr.broadcast
       <<255, 255, 255, 255, 255, 255>>
-      
       iex> addr2 = MACAddr.add(addr1, 1)
       <<0, 0, 0, 0, 0, 0>>
-      
       iex> MACAddr.to_string(addr2)
       "00-00-00-00-00-00"
   
@@ -474,10 +535,8 @@ defmodule MACAddr do
   
       iex> addr1 = MACAddr.parse("00-00-00-00-00-00")
       <<0, 0, 0, 0, 0, 0>
-      
       iex> addr2 = MACAddr.subtract(addr1, 1)
       <<255, 255, 255, 255, 255, 255>>
-      
       iex> MACAddr.to_string(addr2)
       "FF-FF-FF-FF-FF-FF"
   
@@ -501,13 +560,12 @@ defmodule MACAddr do
   end
   
   @doc """
-  Defines the sigil `~a` as a wrapper for `MACAddr.parse/1`.
+  Wraps `MACAddr.parse/1`, making it more convenient to specify an address:
   
   ## Examples
   
-      iex> import MACAddr.Sigil
+      iex> import MACAddr
       nil
-      
       iex> ~a{15ef.2e91.977a}
       <<21, 239, 46, 145, 151, 122>>
   

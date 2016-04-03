@@ -152,15 +152,16 @@
 [&lt;&lt;244, 92, 137, 11, 149, 14&gt;&gt;, &lt;&lt;74, 0, 5, 15, 252, 96&gt;&gt;,
  &lt;&lt;74, 0, 5, 7, 107, 15&gt;&gt;, &lt;&lt;6, 92, 137, 100, 224, 92&gt;&gt;,
  &lt;&lt;2, 127, 112, 79, 147, 123&gt;&gt;, &lt;&lt;246, 92, 137, 189, 168, 100&gt;&gt;]</code></pre>
-<p>Get a list of local MAC addresses, strip them to their OUIs, create random addresses from the OUIs, and convert them to strings:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.Local.all |&gt; Enum.map(fn(addr) -&gt;
+<p>Get a list of local MAC addresses, extract the universally administered ones, strip them to their OUIs, create random addresses from the OUIs, and convert them to Cisco-formatted strings:</p>
+<pre><code class="iex elixir">iex&gt; MACAddr.Local.all |&gt; Enum.filter_map(fn(addr) -&gt;
+       MACAddr.is_universal?(addr)
+     end, fn(addr) -&gt;
        addr
          |&gt; MACAddr.oui
-         |&gt; MACAddr.random 
-         |&gt; MACAddr.to_string
+         |&gt; MACAddr.random
+         |&gt; MACAddr.format_as(:cisco)
      end)
-[&quot;F4-5C-89-98-2B-69&quot;, &quot;4A-00-05-48-2C-2F&quot;, &quot;4A-00-05-31-98-45&quot;,
- &quot;06-5C-89-CD-A3-A9&quot;, &quot;02-7F-70-4F-A3-80&quot;, &quot;F6-5C-89-BB-86-A0&quot;]</code></pre>
+[&quot;f45c.890b.950e&quot;]</code></pre>
 
   </section>
 </div>
@@ -200,9 +201,6 @@ nil</code></pre>
 <p>Get the MAC address associated with 192.168.20.1:</p>
 <pre><code class="iex elixir">iex&gt; MACAddr.Local.by_ip_address(&quot;192.168.20.1&quot;)
 &lt;&lt;244, 92, 137, 11, 149, 14&gt;&gt;</code></pre>
-<p>Try to get the MAC address associated with 169.254.1.1:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.Local.by_ip_address(&quot;169.254.1.1&quot;)
-nil</code></pre>
 
   </section>
 </div>

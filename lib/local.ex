@@ -15,16 +15,17 @@ defmodule MACAddr.Local do
        <<74, 0, 5, 7, 107, 15>>, <<6, 92, 137, 100, 224, 92>>,
        <<2, 127, 112, 79, 147, 123>>, <<246, 92, 137, 189, 168, 100>>]
     
-  Get a list of local MAC addresses, strip them to their OUIs, create random addresses from the OUIs, and convert them to strings:
+  Get a list of local MAC addresses, extract the universally administered ones, strip them to their OUIs, create random addresses from the OUIs, and convert them to Cisco-formatted strings:
   
-      iex> MACAddr.Local.all |> Enum.map(fn(addr) ->
+      iex> MACAddr.Local.all |> Enum.filter_map(fn(addr) ->
+             MACAddr.is_universal?(addr)
+           end, fn(addr) ->
              addr
                |> MACAddr.oui
-               |> MACAddr.random 
-               |> MACAddr.to_string
+               |> MACAddr.random
+               |> MACAddr.format_as(:cisco)
            end)
-      ["F4-5C-89-98-2B-69", "4A-00-05-48-2C-2F", "4A-00-05-31-98-45",
-       "06-5C-89-CD-A3-A9", "02-7F-70-4F-A3-80", "F6-5C-89-BB-86-A0"]
+      ["f45c.890b.950e"]
   
   """
   def all do
@@ -71,11 +72,6 @@ defmodule MACAddr.Local do
   
       iex> MACAddr.Local.by_ip_address("192.168.20.1")
       <<244, 92, 137, 11, 149, 14>>
-      
-  Try to get the MAC address associated with 169.254.1.1:
-      
-      iex> MACAddr.Local.by_ip_address("169.254.1.1")
-      nil
   
   """
   def by_ip_address(ip_address) do

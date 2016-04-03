@@ -67,11 +67,29 @@
 
       
         <section id="moduledoc" class="docstring">
-          <p>Functions for working with IEEE 802 MAC addresses and Organizationally Unique Identifiers (OUIs).</p>
+          <p>Functions for working with IEEE 802 MAC addresses.</p>
 <h2>Representation</h2>
-<p>MACAddr represents MAC addresses and OUIs as binaries. Except where noted, MAC addresses and OUIs can be used interchangeably throughout the module.</p>
-<h2>Speaking of OUIs…</h2>
-<p>The most significant 24 bits of a MAC address is only an OUI when the address’s U/L bit is zero, signifying that the address is globally unique. MACAddr provides functions, <a href="MACAddr.html#is_globally_unique?/1"><code class="inline">MACAddr.is_globally_unique?/1</code></a> and <a href="MACAddr.html#is_locally_administered?/1"><code class="inline">MACAddr.is_locally_administered?/1</code></a>, to test the U/L bit, but otherwise ignores it. If a MAC address is locally administered, what this module considers an OUI is really just the most significant 24 bits of the address.</p>
+<p>MACAddr represents MAC addresses and Organizationally Unique Identifiers (OUIs) as 24- and 48-bit binaries, respectively. Except where noted, MAC addresses and OUIs can be used interchangeably throughout the module:</p>
+<pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;C0-91-34-0B-DE-D4&quot;)
+&lt;&lt;192, 145, 52, 11, 222, 212&gt;&gt;
+iex&gt; MACAddr.to_string(addr)
+&quot;C0-91-34-0B-DE-D4&quot;
+
+iex&gt; oui = MACAddr.parse(&quot;C0-91-34&quot;)
+&lt;&lt;192, 145, 52&gt;&gt;
+iex&gt; MACAddr.to_string(oui)
+&quot;C0-91-34&quot;</code></pre>
+<h2>Organizationally Unique Identifiers</h2>
+<p>MAC addresses can be administered universally or locally. A universally administered address is assigned to a device by its manufacturer, and the most significant half of the address constitutes an organizationally unique identifier (OUI), identifying the manufacturer. For example, 00-15-9A-68-99-3A is a universally administered address. 00-15-9A is its OUI, and identifies the manufacturer as Arris Group, Inc.</p>
+<p>A locally administered address is typically assigned to a device by its administrator, and the most significant half of the address doesn’t constitute an OUI. AE-F5-01-9B-2E-5B is a locally administered address, and AE-F5-01 has no specific meaning as a whole.</p>
+<p>A MAC address is identified as universal or local by its Universal/Local (U/L) bit, which is the second-least significant bit of its most significant byte. If the U/L bit is 0, the address is universally administered; if it’s 1, the address is locally administered.</p>
+<p>Functions like <a href="MACAddr.html#oui/1"><code class="inline">MACAddr.oui/1</code></a> and <a href="MACAddr.html#is_local?/1"><code class="inline">MACAddr.is_local?/1</code></a> distinguish between universally and locally administered addresses, but you can still work with any 24-bit value as though it were an OUI:</p>
+<pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;AE-F5-01-9B-2E-5B&quot;)
+&lt;&lt;174, 245, 1, 155, 46, 91&gt;&gt;
+iex&gt; upper_half = MACAddr.most_significant_24_bits(addr)
+&lt;&lt;174, 245, 1&gt;&gt;
+iex&gt; MACAddr.to_string(upper_half)
+&quot;AE-F5-01&quot;</code></pre>
 
         </section>
       
@@ -105,7 +123,7 @@
     <a href="#broadcast/0">broadcast()</a>
   </div>
   
-    <div class="summary-synopsis"><p>Returns the broadcast address, <code class="inline">&lt;&lt;255, 255, 255, 255, 255, 255&gt;&gt;</code></p>
+    <div class="summary-synopsis"><p>Returns the broadcast address</p>
 </div>
   
 </div>
@@ -138,6 +156,15 @@
 </div>
 <div class="summary-row">
   <div class="summary-signature">
+    <a href="#ig_bit/1">ig_bit(addr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>The value of <code class="inline">addr</code>’s I/G bit. If its I/G bit is 0, <code class="inline">addr</code> is a unicast address. Otherwise, <code class="inline">addr</code> is a multicast address</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
     <a href="#is_broadcast?/1">is_broadcast?(addr)</a>
   </div>
   
@@ -147,19 +174,10 @@
 </div>
 <div class="summary-row">
   <div class="summary-signature">
-    <a href="#is_globally_unique?/1">is_globally_unique?(addr)</a>
+    <a href="#is_local?/1">is_local?(addr)</a>
   </div>
   
-    <div class="summary-synopsis"><p>Determines if <code class="inline">addr</code> is globally unique (OUI enforced), based on its U/L bit</p>
-</div>
-  
-</div>
-<div class="summary-row">
-  <div class="summary-signature">
-    <a href="#is_locally_administered?/1">is_locally_administered?(addr)</a>
-  </div>
-  
-    <div class="summary-synopsis"><p>Determines if <code class="inline">addr</code> is locally administered (no OUI), based on its U/L bit</p>
+    <div class="summary-synopsis"><p>Determines if <code class="inline">addr</code> is locally administered, based on its U/L bit</p>
 </div>
   
 </div>
@@ -183,10 +201,28 @@
 </div>
 <div class="summary-row">
   <div class="summary-signature">
+    <a href="#is_universal?/1">is_universal?(addr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Determines if <code class="inline">addr</code> is universally administered, based on its U/L bit</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#most_significant_24_bits/1">most_significant_24_bits(addr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Extracts the most significant 24 bits of <code class="inline">addr</code></p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
     <a href="#oui/1">oui(addr)</a>
   </div>
   
-    <div class="summary-synopsis"><p>Extracts the OUI, or the most significant 24 bits, of <code class="inline">addr</code></p>
+    <div class="summary-synopsis"><p>If <code class="inline">addr</code> is universally administered, returns its OUI. Otherwise, returns <code class="inline">nil</code></p>
 </div>
   
 </div>
@@ -219,10 +255,10 @@
 </div>
 <div class="summary-row">
   <div class="summary-signature">
-    <a href="#random/1">random(oui)</a>
+    <a href="#random/1">random(upper_half)</a>
   </div>
   
-    <div class="summary-synopsis"><p>Generates a random MAC address with the specified OUI</p>
+    <div class="summary-synopsis"><p>Generates a random MAC address with the specified binary as the upper half</p>
 </div>
   
 </div>
@@ -231,7 +267,7 @@
     <a href="#sigil_a/2">sigil_a(string, list)</a>
   </div>
   
-    <div class="summary-synopsis"><p>Defines the sigil <code class="inline">~a</code> as a wrapper for <a href="MACAddr.html#parse/1"><code class="inline">MACAddr.parse/1</code></a></p>
+    <div class="summary-synopsis"><p>Wraps <a href="MACAddr.html#parse/1"><code class="inline">MACAddr.parse/1</code></a>, making it more convenient to specify an address</p>
 </div>
   
 </div>
@@ -280,6 +316,15 @@
 </div>
   
 </div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#ul_bit/1">ul_bit(addr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>The value of <code class="inline">addr</code>’s U/L bit. If its U/L bit is 0, <code class="inline">addr</code> is a universally administered address. Otherwise, <code class="inline">addr</code> is a locally administered address</p>
+</div>
+  
+</div>
 
   </div>
 
@@ -316,19 +361,15 @@
 <p>Grab a random MAC address, add 20, and check the difference:</p>
 <pre><code class="iex elixir">iex&gt; addr1 = MACAddr.random
 &lt;&lt;122, 67, 52, 228, 207, 143&gt;&gt;
-
 iex&gt; addr2 = MACAddr.add(addr1, 20)
 &lt;&lt;122, 67, 52, 228, 207, 163&gt;&gt;
-
 iex&gt; MACAddr.to_integer(addr2) - MACAddr.to_integer(addr1)
 20</code></pre>
 <p>Adding 1 to FF-FF-FF-FF-FF-FF wraps to yield 00-00-00-00-00-00:</p>
 <pre><code class="iex elixir">iex&gt; addr1 = MACAddr.broadcast
 &lt;&lt;255, 255, 255, 255, 255, 255&gt;&gt;
-
 iex&gt; addr2 = MACAddr.add(addr1, 1)
 &lt;&lt;0, 0, 0, 0, 0, 0&gt;&gt;
-
 iex&gt; MACAddr.to_string(addr2)
 &quot;00-00-00-00-00-00&quot;</code></pre>
 
@@ -344,7 +385,9 @@ iex&gt; MACAddr.to_string(addr2)
   </div>
   
   <section class="docstring">
-    <p>Returns the broadcast address, <code class="inline">&lt;&lt;255, 255, 255, 255, 255, 255&gt;&gt;</code>.</p>
+    <p>Returns the broadcast address:</p>
+<pre><code class="iex elixir">iex&gt; MACAddr.broadcast |&gt; MACAddr.to_string
+&quot;FF-FF-FF-FF-FF-FF&quot;</code></pre>
 
   </section>
 </div>
@@ -428,10 +471,9 @@ iex&gt; MACAddr.to_string(addr2)
 <p>Cisco style renders a MAC address as three 16-bit words of zero-padded hex, separated with periods:</p>
 <pre><code class="iex elixir">iex&gt; MACAddr.format_as(addr, :cisco)
 &quot;15ef.2e91.977a&quot;</code></pre>
-<p><strong>Note:</strong> Cisco style doesn’t work for OUIs:</p>
+<p><strong>Note:</strong> Cisco style doesn’t work for OUIs or other 24-bit values:</p>
 <pre><code class="iex elixir">iex&gt; oui = MACAddr.parse(&quot;FF-FF-FF&quot;)
 &lt;&lt;255, 255, 255&gt;&gt;
-
 iex&gt; MACAddr.format_as(oui, :cisco)
 ** (FunctionClauseError) no function clause matching in MACAddr.split/2
     (macaddr) lib/macaddr.ex:39: MACAddr.split(&lt;&lt;255, 255, 255&gt;&gt;, 16)
@@ -455,15 +497,32 @@ iex&gt; MACAddr.format_as(oui, :cisco)
 <p>Converting an integer to a 48-bit MAC address:</p>
 <pre><code class="iex elixir">iex&gt; addr = MACAddr.from_integer(24117022660474)
 &lt;&lt;21, 239, 46, 145, 151, 122&gt;&gt;
-
 iex&gt; MACAddr.format_as(addr, :cisco)
 &quot;15ef.2e91.977a&quot;</code></pre>
 <p>Converting an integer to a 24-bit OUI:</p>
 <pre><code class="iex elixir">iex&gt; oui = MACAddr.from_integer(0x15ef23, 24)
 &lt;&lt;21, 239, 35&gt;&gt;
-
 iex&gt; MACAddr.to_string(oui)
 &quot;15-EF-23&quot;</code></pre>
+
+  </section>
+</div>
+<div class="detail" id="ig_bit/1">
+  <div class="detail-header">
+    <a href="#ig_bit/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">ig_bit(addr)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>The value of <code class="inline">addr</code>’s I/G bit. If its I/G bit is 0, <code class="inline">addr</code> is a unicast address. Otherwise, <code class="inline">addr</code> is a multicast address.</p>
+<h2>Examples</h2>
+<pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;F4-5C-89-E2-62-94&quot;)
+&lt;&lt;244, 92, 137, 226, 98, 148&gt;&gt;
+iex&gt; MACAddr.ig_bit(addr) == 0 and MACAddr.is_unicast?(addr)
+true</code></pre>
 
   </section>
 </div>
@@ -487,38 +546,17 @@ true</code></pre>
 
   </section>
 </div>
-<div class="detail" id="is_globally_unique?/1">
+<div class="detail" id="is_local?/1">
   <div class="detail-header">
-    <a href="#is_globally_unique?/1" class="detail-link" title="Link to this function">
+    <a href="#is_local?/1" class="detail-link" title="Link to this function">
       <i class="icon-link"></i>
     </a>
-    <span class="signature">is_globally_unique?(addr)</span>
+    <span class="signature">is_local?(addr)</span>
       
   </div>
   
   <section class="docstring">
-    <p>Determines if <code class="inline">addr</code> is globally unique (OUI enforced), based on its U/L bit.</p>
-<h2>Examples</h2>
-<p>F4-5C-89-E2-62-94 is a globally unique MAC address:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;F4-5C-89-E2-62-94&quot;) |&gt; MACAddr.is_globally_unique?
-true</code></pre>
-<p>4A-00-05-5A-46-15 is a locally administered MAC address:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;01-80-C2-00-00-00&quot;) |&gt; MACAddr.is_globally_unique?
-false</code></pre>
-
-  </section>
-</div>
-<div class="detail" id="is_locally_administered?/1">
-  <div class="detail-header">
-    <a href="#is_locally_administered?/1" class="detail-link" title="Link to this function">
-      <i class="icon-link"></i>
-    </a>
-    <span class="signature">is_locally_administered?(addr)</span>
-      
-  </div>
-  
-  <section class="docstring">
-    <p>Determines if <code class="inline">addr</code> is locally administered (no OUI), based on its U/L bit.</p>
+    <p>Determines if <code class="inline">addr</code> is locally administered, based on its U/L bit.</p>
 
   </section>
 </div>
@@ -534,14 +572,14 @@ false</code></pre>
   <section class="docstring">
     <p>Determines if <code class="inline">addr</code> is a multicast address, based on its I/G bit.</p>
 <h2>Examples</h2>
-<p>F4-5C-89-E2-62-94 is a host (unicast) MAC address:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;F4-5C-89-E2-62-94&quot;) |&gt; MACAddr.is_multicast?
+<p>Is F4-5C-89-E2-62-94 a multicast address?</p>
+<pre><code class="iex elixir">iex&gt; &quot;F4-5C-89-E2-62-94&quot; |&gt; MACAddr.parse |&gt; MACAddr.is_multicast?
 false</code></pre>
-<p>01-80-C2-00-00-00 is the multicast MAC address for IEEE 802.1D Spanning Tree Protocol:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;01-80-C2-00-00-00&quot;) |&gt; MACAddr.is_multicast?
+<p>Is 01-80-C2-00-00-00 a multicast address?</p>
+<pre><code class="iex elixir">iex&gt; &quot;01-80-C2-00-00-00&quot; |&gt; MACAddr.parse |&gt; MACAddr.is_multicast?
 true</code></pre>
-<p>FF-FF-FF-FF-FF-FF is the broadcast address, and is also a multicast address:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;FF-FF-FF-FF-FF-FF&quot;) |&gt; MACAddr.is_multicast?
+<p>Is the broadcast address a multicast address?</p>
+<pre><code class="iex elixir">iex&gt; MACAddr.broadcast |&gt; MACAddr.is_multicast?
 true</code></pre>
 
   </section>
@@ -560,6 +598,48 @@ true</code></pre>
 
   </section>
 </div>
+<div class="detail" id="is_universal?/1">
+  <div class="detail-header">
+    <a href="#is_universal?/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">is_universal?(addr)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Determines if <code class="inline">addr</code> is universally administered, based on its U/L bit.</p>
+<h2>Examples</h2>
+<p>Is F4-5C-89-E2-62-94 universally administered?</p>
+<pre><code class="iex elixir">iex&gt; &quot;F4-5C-89-E2-62-94&quot;|&gt; MACAddr.parse |&gt; MACAddr.is_universal?
+true</code></pre>
+<p>Is 4A-00-05-5A-46-15 universally administered?</p>
+<pre><code class="iex elixir">iex&gt; &quot;4A-00-05-5A-46-15&quot; |&gt; MACAddr.parse |&gt; MACAddr.is_universal?
+false</code></pre>
+
+  </section>
+</div>
+<div class="detail" id="most_significant_24_bits/1">
+  <div class="detail-header">
+    <a href="#most_significant_24_bits/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">most_significant_24_bits(addr)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Extracts the most significant 24 bits of <code class="inline">addr</code>.</p>
+<h2>Examples</h2>
+<pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;15-EF-2E-91-97-7A&quot;)
+&lt;&lt;21, 239, 46, 145, 151, 122&gt;&gt;
+iex&gt; upper_half = MACAddr.most_significant_24_bits(addr)
+&lt;&lt;21, 239, 46&gt;&gt;
+iex&gt; MACAddr.to_string(upper_half)
+&quot;15-EF-2E&quot;</code></pre>
+
+  </section>
+</div>
 <div class="detail" id="oui/1">
   <div class="detail-header">
     <a href="#oui/1" class="detail-link" title="Link to this function">
@@ -570,16 +650,16 @@ true</code></pre>
   </div>
   
   <section class="docstring">
-    <p>Extracts the OUI, or the most significant 24 bits, of <code class="inline">addr</code>.</p>
+    <p>If <code class="inline">addr</code> is universally administered, returns its OUI. Otherwise, returns <code class="inline">nil</code>.</p>
 <h2>Examples</h2>
-<pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;15-EF-2E-91-97-7A&quot;)
-&lt;&lt;21, 239, 46, 145, 151, 122&gt;&gt;
-
-iex&gt; oui = MACAddr.oui(addr)
+<p>Get the OUI of a universally administered address:</p>
+<pre><code class="iex elixir">iex&gt; oui = &quot;15-EF-2E-91-97-7A&quot; |&gt; MACAddr.parse |&gt; MACAddr.oui
 &lt;&lt;21, 239, 46&gt;&gt;
-
 iex&gt; MACAddr.to_string(oui)
 &quot;15-EF-2E&quot;</code></pre>
+<p>Try to get the OUI of a locally administered address:</p>
+<pre><code class="iex elixir">iex&gt; &quot;0B-EA-17-08-CD-31&quot; |&gt; MACAddr.parse |&gt; MACAddr.oui
+nil</code></pre>
 
   </section>
 </div>
@@ -612,7 +692,6 @@ iex&gt; MACAddr.to_string(oui)
 <p>…but it errs on the side of leniency:</p>
 <pre><code class="iex elixir">iex&gt; oui = MACAddr.parse(&quot;ventral beeswax&quot;)
 &lt;&lt;234, 190, 234&gt;&gt;
-
 iex&gt; MACAddr.to_string(oui)
 &quot;EA-BE-EA&quot;</code></pre>
 
@@ -646,7 +725,6 @@ iex&gt; MACAddr.to_string(oui)
 <h2>Examples</h2>
 <pre><code class="iex elixir">iex&gt; addr = MACAddr.random
 &lt;&lt;243, 5, 217, 191, 24, 15&gt;&gt;
-
 iex&gt; MACAddr.to_string(addr)
 &quot;F3-05-D9-BF-18-0F&quot;</code></pre>
 
@@ -657,20 +735,17 @@ iex&gt; MACAddr.to_string(addr)
     <a href="#random/1" class="detail-link" title="Link to this function">
       <i class="icon-link"></i>
     </a>
-    <span class="signature">random(oui)</span>
+    <span class="signature">random(upper_half)</span>
       
   </div>
   
   <section class="docstring">
-    <p>Generates a random MAC address with the specified OUI.</p>
+    <p>Generates a random MAC address with the specified binary as the upper half.</p>
 <h2>Examples</h2>
-<p>Let’s create a random MAC address with an OUI of 00-CD-FE:</p>
 <pre><code class="iex elixir">iex&gt; oui = MACAddr.parse(&quot;00-CD-FE&quot;)
 &lt;&lt;0, 205, 254&gt;&gt;
-
 iex&gt; addr = MACAddr.random(oui)
 &lt;&lt;0, 205, 254, 109, 252, 6&gt;&gt;
-
 iex&gt; MACAddr.to_string(addr)
 &quot;00-CD-FE-6D-FC-06&quot;</code></pre>
 
@@ -686,11 +761,10 @@ iex&gt; MACAddr.to_string(addr)
   </div>
   
   <section class="docstring">
-    <p>Defines the sigil <code class="inline">~a</code> as a wrapper for <a href="MACAddr.html#parse/1"><code class="inline">MACAddr.parse/1</code></a>.</p>
+    <p>Wraps <a href="MACAddr.html#parse/1"><code class="inline">MACAddr.parse/1</code></a>, making it more convenient to specify an address:</p>
 <h2>Examples</h2>
-<pre><code class="iex elixir">iex&gt; import MACAddr.Sigil
+<pre><code class="iex elixir">iex&gt; import MACAddr
 nil
-
 iex&gt; ~a{15ef.2e91.977a}
 &lt;&lt;21, 239, 46, 145, 151, 122&gt;&gt;</code></pre>
 
@@ -717,12 +791,8 @@ iex&gt; ~a{15ef.2e91.977a}
 <p>…or into 16-bit chunks:</p>
 <pre><code class="iex elixir">iex&gt; MACAddr.split(addr, 16)
 [5615, 11921, 38778]</code></pre>
-<p><strong>Note:</strong> We can’t split an OUI evenly into 16-bit chunks, so this won’t work:</p>
-<pre><code class="iex elixir">iex&gt; oui = MACAddr.parse(&quot;FF-FF-FF&quot;)
-&lt;&lt;255, 255, 255&gt;&gt;
-
-iex&gt; MACAddr.split(oui, 16)
-
+<p><strong>Note:</strong> We can’t split an OUI or other 24-bit value evenly into 16-bit chunks, so this won’t work:</p>
+<pre><code class="iex elixir">iex&gt; &quot;FF-FF-FF&quot;|&gt; MACAddr.parse |&gt; MACAddr.split(16)
 ** (FunctionClauseError) no function clause matching in MACAddr.split/2
     (macaddr) lib/macaddr.ex:32: MACAddr.split(&lt;&lt;255, 255, 255&gt;&gt;, 16)</code></pre>
 
@@ -743,10 +813,8 @@ iex&gt; MACAddr.split(oui, 16)
 <p>Subtracting 1 from 00-00-00-00-00-00 wraps to yield FF-FF-FF-FF-FF-FF:</p>
 <pre><code class="iex elixir">iex&gt; addr1 = MACAddr.parse(&quot;00-00-00-00-00-00&quot;)
 &lt;&lt;0, 0, 0, 0, 0, 0&gt;
-
 iex&gt; addr2 = MACAddr.subtract(addr1, 1)
 &lt;&lt;255, 255, 255, 255, 255, 255&gt;&gt;
-
 iex&gt; MACAddr.to_string(addr2)
 &quot;FF-FF-FF-FF-FF-FF&quot;</code></pre>
 
@@ -797,6 +865,25 @@ iex&gt; MACAddr.to_string(addr2)
 <h2>Examples</h2>
 <pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;15ef.2e91.977a&quot;) |&gt; MACAddr.to_string
 &quot;15-EF-2E-91-97-7A&quot;</code></pre>
+
+  </section>
+</div>
+<div class="detail" id="ul_bit/1">
+  <div class="detail-header">
+    <a href="#ul_bit/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">ul_bit(addr)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>The value of <code class="inline">addr</code>’s U/L bit. If its U/L bit is 0, <code class="inline">addr</code> is a universally administered address. Otherwise, <code class="inline">addr</code> is a locally administered address.</p>
+<h2>Examples</h2>
+<pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;F4-5C-89-E2-62-94&quot;)
+&lt;&lt;244, 92, 137, 226, 98, 148&gt;&gt;
+iex&gt; MACAddr.ul_bit(addr) == 0 and MACAddr.is_universal?(addr)
+true</code></pre>
 
   </section>
 </div>
