@@ -87,9 +87,9 @@ defmodule MACAddr do
       iex> addr = MACAddr.parse("AB-8F-04-97-2C-A8")
       <<171, 143, 4, 151, 44, 168>>
       iex> MACAddr.format(addr, 16, fn(word) ->
-      ...> word
-      ...>   |> Integer.to_string(16)
-      ...>   |> String.rjust(4, ?0)
+      ...>   word
+      ...>     |> Integer.to_string(16)
+      ...>     |> String.rjust(4, ?0)
       ...> end, " ")
       "AB8F 0497 2CA8"
       
@@ -101,7 +101,7 @@ defmodule MACAddr do
       ...>   byte
       ...>     |> Integer.to_string(16)
       ...>     |> String.downcase
-      ...>   end, ":")
+      ...> end, ":")
       "3b:b5:4e:42:72:3"
       
   You're well on your way to becoming a Solaris admin. Great job!
