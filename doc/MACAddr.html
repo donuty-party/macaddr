@@ -358,8 +358,8 @@ iex&gt; MACAddr.to_string(upper_half)
   <section class="docstring">
     <p>Adds an integer <code class="inline">value</code> to <code class="inline">addr</code>, wrapping if necessary.</p>
 <h2>Examples</h2>
-<p>Grab a random MAC address, add 20, and check the difference:</p>
-<pre><code class="iex elixir">iex&gt; addr1 = MACAddr.random
+<p>Grab a MAC address, add 20, and check the difference:</p>
+<pre><code class="iex elixir">iex&gt; addr1 = MACAddr.parse(&quot;7A-43-34-E4-CF-8F&quot;)
 &lt;&lt;122, 67, 52, 228, 207, 143&gt;&gt;
 iex&gt; addr2 = MACAddr.add(addr1, 20)
 &lt;&lt;122, 67, 52, 228, 207, 163&gt;&gt;
@@ -404,25 +404,23 @@ iex&gt; MACAddr.to_string(addr2)
     <p>Formats a MAC address as a string, by dividing <code class="inline">addr</code> into chunks of <code class="inline">chunk_size</code> bits, formatting the chunks with a <code class="inline">chunk_formatter</code> function, and joining them with a <code class="inline">separator</code> string.</p>
 <p>If <a href="MACAddr.html#to_string/1"><code class="inline">MACAddr.to_string/1</code></a> or <a href="MACAddr.html#format_as/2"><code class="inline">MACAddr.format_as/2</code></a> don’t cut it, consider this as a more flexible option.</p>
 <h2>Examples</h2>
-<p>Let’s make up a MAC address:</p>
+<p>Let’s make up a MAC address, and format it as zero-paded, uppercase hex words, separated with spaces:</p>
 <pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;AB-8F-04-97-2C-A8&quot;)
-&lt;&lt;171, 143, 4, 151, 44, 168&gt;&gt;</code></pre>
-<p>Now, let’s format it as zero-padded, uppercase hex words, separated with spaces:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.format(addr, 16, fn(word) -&gt;
-       word
-         |&gt; Integer.to_string(16)
-         |&gt; String.rjust(4, ?0)
-     end, &quot; &quot;)
+&lt;&lt;171, 143, 4, 151, 44, 168&gt;&gt;
+iex&gt; MACAddr.format(addr, 16, fn(word) -&gt;
+...&gt; word
+...&gt;   |&gt; Integer.to_string(16)
+...&gt;   |&gt; String.rjust(4, ?0)
+...&gt; end, &quot; &quot;)
 &quot;AB8F 0497 2CA8&quot;</code></pre>
-<p>Let’s make up another MAC address:</p>
+<p>Let’s make up another MAC address. We’ll format this one based on the as_Sun() method from Perl’s Net/MAC.pm:</p>
 <pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;3B-B5-4E-42-72-03&quot;)
-&lt;&lt;59, 181, 78, 66, 114, 3&gt;&gt;</code></pre>
-<p>We’ll format this one based on the as_Sun() method from Perl’s Net/MAC.pm:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.format(addr, 8, fn(byte) -&gt;
-       byte
-         |&gt; Integer.to_string(16)
-         |&gt; String.downcase
-     end, &quot;:&quot;)
+&lt;&lt;59, 181, 78, 66, 114, 3&gt;&gt;
+iex&gt; MACAddr.format(addr, 8, fn(byte) -&gt;
+...&gt;   byte
+...&gt;     |&gt; Integer.to_string(16)
+...&gt;     |&gt; String.downcase
+...&gt;   end, &quot;:&quot;)
 &quot;3b:b5:4e:42:72:3&quot;</code></pre>
 <p>You’re well on your way to becoming a Solaris admin. Great job!</p>
 
@@ -782,14 +780,12 @@ iex&gt; ~a{15ef.2e91.977a}
   <section class="docstring">
     <p>Splits <code class="inline">addr</code> into a list of integers, each representing a <code class="inline">chunk_size</code> (8-, 16-, or 24-) bit chunk of the address.</p>
 <h2>Examples</h2>
-<p>Let’s grab a MAC address:</p>
+<p>Let’s grab a MAC address, and split it into chunks:</p>
 <pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;15-EF-2E-91-97-7A&quot;)
-&lt;&lt;21, 239, 46, 145, 151, 122&gt;&gt;</code></pre>
-<p>…then split it into 8-bit chunks:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.split(addr, 8)
-[21, 239, 46, 145, 151, 122]</code></pre>
-<p>…or into 16-bit chunks:</p>
-<pre><code class="iex elixir">iex&gt; MACAddr.split(addr, 16)
+&lt;&lt;21, 239, 46, 145, 151, 122&gt;&gt;
+iex&gt; MACAddr.split(addr, 8)
+[21, 239, 46, 145, 151, 122]
+iex&gt; MACAddr.split(addr, 16)
 [5615, 11921, 38778]</code></pre>
 <p><strong>Note:</strong> We can’t split an OUI or other 24-bit value evenly into 16-bit chunks, so this won’t work:</p>
 <pre><code class="iex elixir">iex&gt; &quot;FF-FF-FF&quot;|&gt; MACAddr.parse |&gt; MACAddr.split(16)
@@ -812,7 +808,7 @@ iex&gt; ~a{15ef.2e91.977a}
 <h2>Examples</h2>
 <p>Subtracting 1 from 00-00-00-00-00-00 wraps to yield FF-FF-FF-FF-FF-FF:</p>
 <pre><code class="iex elixir">iex&gt; addr1 = MACAddr.parse(&quot;00-00-00-00-00-00&quot;)
-&lt;&lt;0, 0, 0, 0, 0, 0&gt;
+&lt;&lt;0, 0, 0, 0, 0, 0&gt;&gt;
 iex&gt; addr2 = MACAddr.subtract(addr1, 1)
 &lt;&lt;255, 255, 255, 255, 255, 255&gt;&gt;
 iex&gt; MACAddr.to_string(addr2)
