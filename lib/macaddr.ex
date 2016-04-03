@@ -44,18 +44,12 @@ defmodule MACAddr do
   
   ## Examples
   
-  Let's grab a MAC address:
+  Let's grab a MAC address, and split it into chunks:
   
       iex> addr = MACAddr.parse("15-EF-2E-91-97-7A")
       <<21, 239, 46, 145, 151, 122>>
-      
-  …then split it into 8-bit chunks:
-      
       iex> MACAddr.split(addr, 8)
       [21, 239, 46, 145, 151, 122]
-      
-  …or into 16-bit chunks:
-      
       iex> MACAddr.split(addr, 16)
       [5615, 11921, 38778]
       
@@ -88,45 +82,43 @@ defmodule MACAddr do
   
   ## Examples
   
-  Let's make up a MAC address:
+  Let's make up a MAC address, and format it as zero-paded, uppercase hex words, separated with spaces:
   
       iex> addr = MACAddr.parse("AB-8F-04-97-2C-A8")
       <<171, 143, 4, 151, 44, 168>>
-      
-  Now, let's format it as zero-padded, uppercase hex words, separated with spaces:
-
       iex> MACAddr.format(addr, 16, fn(word) ->
-             word
-               |> Integer.to_string(16)
-               |> String.rjust(4, ?0)
-           end, " ")
+      ...> word
+      ...>   |> Integer.to_string(16)
+      ...>   |> String.rjust(4, ?0)
+      ...> end, " ")
       "AB8F 0497 2CA8"
       
-  Let's make up another MAC address:
+  Let's make up another MAC address. We'll format this one based on the as_Sun() method from Perl's Net/MAC.pm:
   
       iex> addr = MACAddr.parse("3B-B5-4E-42-72-03")
       <<59, 181, 78, 66, 114, 3>>
-      
-  We'll format this one based on the as_Sun() method from Perl's Net/MAC.pm:
-  
       iex> MACAddr.format(addr, 8, fn(byte) ->
-             byte
-               |> Integer.to_string(16)
-               |> String.downcase
-           end, ":")
+      ...>   byte
+      ...>     |> Integer.to_string(16)
+      ...>     |> String.downcase
+      ...>   end, ":")
       "3b:b5:4e:42:72:3"
       
   You're well on your way to becoming a Solaris admin. Great job!
       
   """
   def format(addr, chunk_size, chunk_formatter, separator \\ "") do
-    addr |> split(chunk_size) |> Enum.map_join(separator, chunk_formatter)
+    addr
+      |> split(chunk_size)
+      |> Enum.map_join(separator, chunk_formatter)
   end
 
   defp format_padded_hex(addr, chunk_size, separator \\ "") do
     padding = div(chunk_size, 4)
     format(addr, chunk_size, fn(chunk) ->
-      chunk |> Integer.to_string(16) |> String.rjust(padding, ?0)
+      chunk
+        |> Integer.to_string(16)
+        |> String.rjust(padding, ?0)
     end, separator)
   end
     
@@ -336,7 +328,9 @@ defmodule MACAddr do
       raise ArgumentError, "Expected a 6- or 12-digit hex string."
     end
     
-    hex |> String.to_integer(16) |> from_integer(num_digits * 4)
+    hex
+      |> String.to_integer(16)
+      |> from_integer(num_digits * 4)
   end
   
   @doc """
@@ -498,9 +492,9 @@ defmodule MACAddr do
   
   ## Examples
   
-  Grab a random MAC address, add 20, and check the difference:
+  Grab a MAC address, add 20, and check the difference:
   
-      iex> addr1 = MACAddr.random
+      iex> addr1 = MACAddr.parse("7A-43-34-E4-CF-8F")
       <<122, 67, 52, 228, 207, 143>>
       iex> addr2 = MACAddr.add(addr1, 20)
       <<122, 67, 52, 228, 207, 163>>
@@ -534,7 +528,7 @@ defmodule MACAddr do
   Subtracting 1 from 00-00-00-00-00-00 wraps to yield FF-FF-FF-FF-FF-FF:
   
       iex> addr1 = MACAddr.parse("00-00-00-00-00-00")
-      <<0, 0, 0, 0, 0, 0>
+      <<0, 0, 0, 0, 0, 0>>
       iex> addr2 = MACAddr.subtract(addr1, 1)
       <<255, 255, 255, 255, 255, 255>>
       iex> MACAddr.to_string(addr2)
