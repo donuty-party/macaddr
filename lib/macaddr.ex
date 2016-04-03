@@ -52,6 +52,8 @@ defmodule MACAddr do
       [21, 239, 46, 145, 151, 122]
       iex> MACAddr.split(addr, 16)
       [5615, 11921, 38778]
+      iex> MACAddr.split(addr, 24)
+      [1437486, 9541498]
       
   **Note:** We can't split an OUI or other 24-bit value evenly into 16-bit chunks, so this won't work:
       
