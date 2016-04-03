@@ -408,9 +408,9 @@ iex&gt; MACAddr.to_string(addr2)
 <pre><code class="iex elixir">iex&gt; addr = MACAddr.parse(&quot;AB-8F-04-97-2C-A8&quot;)
 &lt;&lt;171, 143, 4, 151, 44, 168&gt;&gt;
 iex&gt; MACAddr.format(addr, 16, fn(word) -&gt;
-...&gt; word
-...&gt;   |&gt; Integer.to_string(16)
-...&gt;   |&gt; String.rjust(4, ?0)
+...&gt;   word
+...&gt;     |&gt; Integer.to_string(16)
+...&gt;     |&gt; String.rjust(4, ?0)
 ...&gt; end, &quot; &quot;)
 &quot;AB8F 0497 2CA8&quot;</code></pre>
 <p>Let’s make up another MAC address. We’ll format this one based on the as_Sun() method from Perl’s Net/MAC.pm:</p>
@@ -420,7 +420,7 @@ iex&gt; MACAddr.format(addr, 8, fn(byte) -&gt;
 ...&gt;   byte
 ...&gt;     |&gt; Integer.to_string(16)
 ...&gt;     |&gt; String.downcase
-...&gt;   end, &quot;:&quot;)
+...&gt; end, &quot;:&quot;)
 &quot;3b:b5:4e:42:72:3&quot;</code></pre>
 <p>You’re well on your way to becoming a Solaris admin. Great job!</p>
 
