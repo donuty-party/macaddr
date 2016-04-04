@@ -287,15 +287,21 @@ defmodule MACAddr do
   end
   
   @doc """
-  Extracts hex digits from `string`, converts the hex digits to an integer, and converts the integer to a MAC address.
+  Parses `string` as a MAC address in the specified format. The default is `:hex`.
   
-  Expects 6 or 12 hex digits.
+  Available formats are:
+  - `:hex`
+  - `:dotted_decimal`
+  
+  ## Parsing as Hex
+  
+  Extracts hex digits from `string`, converts the hex digits to an integer, and converts the integer to a MAC address. Expects 6 or 12 hex digits.
   
   ## Examples
   
   Parsing a Cisco-formatted MAC address:
   
-      iex> MACAddr.parse("15ef.2e91.977a")        
+      iex> MACAddr.parse("15ef.2e91.977a", :hex)        
       <<21, 239, 46, 145, 151, 122>>
       
   Parsing an IEEE-formatted OUI:
@@ -310,19 +316,35 @@ defmodule MACAddr do
       
   If this function can't find `addr` or OUI in the string, you'll get an ArgumentError:
   
-      iex> MACAddr.parse("Hideous anecdote")
+      iex> MACAddr.parse("Hideous anecdote", :hex)
       ** (ArgumentError) Expected a 6- or 12-digit hex string.
           (macaddr) lib/macaddr.ex:205: MACAddr.parse/1
          
   …but it errs on the side of leniency:
       
-      iex> oui = MACAddr.parse("ventral beeswax")
+      iex> oui = MACAddr.parse("ventral beeswax", :hex)
       <<234, 190, 234>>
       iex> MACAddr.to_string(oui)
       "EA-BE-EA"
   
+  ## Parsing as Dotted Decimal
+  
+  Expects a `string` with 3 or 6 decimal numbers from 0-255, separated by periods, like `"116.4.63"`, or `"116.4.63.132.41.82"`.
+  
+  ## Examples
+  
+  Parse a MAC address as dotted decimal:
+  
+      iex> addr = MACAddr.parse("116.4.63.132.41.82", :dotted_decimal)
+      <<116, 4, 63, 132, 41, 82>>
+      iex> MACAddr.to_string(addr)
+      "74-04-3F-84-29-52"
+      
   """
-  def parse(string) do
+  def parse(string, format \\ :hex) do
+    do_parse(string, format)
+  end
+  defp do_parse(string, :hex) do
     hex = String.replace(string, ~r/[^0-9a-f]/i, "")
     
     num_digits = String.length(hex)
@@ -333,6 +355,31 @@ defmodule MACAddr do
     hex
       |> String.to_integer(16)
       |> from_integer(num_digits * 4)
+  end
+  defp do_parse(string, :dotted_decimal) do
+    lexer_result = string
+      |> String.to_char_list 
+      |> :dotted_decimal_lexer.string
+      
+    case lexer_result do
+      {:ok, tokens, _} ->
+        {:ok, bytes} = :dotted_decimal_parser.parse(tokens)
+    
+        unless length(bytes) == 3 or length(bytes) == 6 do
+          raise ArgumentError, "expected 3 or 6 decimal numbers; #{string} contains #{length(bytes)}"
+        end
+    
+        unless Enum.all?(bytes, &(&1 <= 255)) do
+          raise ArgumentError, "#{string} contains a byte with a value greater than 255"
+        end
+    
+        :erlang.list_to_binary(bytes)
+      {:error, {_, _, {:illegal, char}}, _} ->
+        raise ArgumentError, "#{string} contains an illegal character, '#{IO.inspect(char)}'"
+    end
+  end
+  defp do_parse(string, :oid) do
+    do_parse(string, :dotted_decimal)
   end
   
   @doc """
@@ -376,7 +423,7 @@ defmodule MACAddr do
   end
   
   @doc """
-  Determines if `addr` is equal to the broadcast address, `<<255, 255, 255, 255, 255, 255>>`.
+  Determines if `addr` is equal to the broadcast address.
   
   ## Examples
   
@@ -560,11 +607,22 @@ defmodule MACAddr do
   
   ## Examples
   
+  Parse a hex string as a MAC address:
+  
       iex> import MACAddr
       nil
-      iex> ~a{15ef.2e91.977a}
+      iex> ~a(15ef.2e91.977a)
+      <<21, 239, 46, 145, 151, 122>>
+      
+  You can use the 'd' modifier to parse dotted decimal formatted addresses:
+      
+      iex> import MACAddr
+      nil
+      iex> ~a(21.239.46.145.151.122)d
       <<21, 239, 46, 145, 151, 122>>
   
   """
-  def sigil_a(string, []), do: MACAddr.parse(string)
+  def sigil_a(string, ''),  do: MACAddr.parse(string)
+  def sigil_a(string, 'h'), do: MACAddr.parse(string, :hex)
+  def sigil_a(string, 'd'), do: MACAddr.parse(string, :dotted_decimal)
 end
