@@ -455,7 +455,7 @@ defmodule MACAddr do
   
   Is the broadcast address a multicast address?
   
-      iex> MACAddr.broadcast |> MACAddr.is_multicast?
+      iex> MACAddr.is_multicast?(MACAddr.broadcast)
       true
   """
   def is_multicast?(addr) do
