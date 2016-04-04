@@ -693,7 +693,7 @@ nil</code></pre>
 &lt;&lt;0, 205, 254, 109, 252, 6&gt;&gt;</code></pre>
 <p>If this function can’t find <code class="inline">addr</code> or OUI in the string, you’ll get an ArgumentError:</p>
 <pre><code class="iex elixir">iex&gt; MACAddr.parse(&quot;Hideous anecdote&quot;, :hex)
-** (ArgumentError) Expected a 6- or 12-digit hex string.
+** (ArgumentError) expected a 6- or 12-digit hex string
     (macaddr) lib/macaddr.ex:205: MACAddr.parse/1</code></pre>
 <p>…but it errs on the side of leniency:</p>
 <pre><code class="iex elixir">iex&gt; oui = MACAddr.parse(&quot;ventral beeswax&quot;, :hex)

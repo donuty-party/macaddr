@@ -249,7 +249,7 @@ defmodule MACAddr do
   """
   def from_integer(integer, size \\ 48) do
     unless size == 48 or size == 24 do
-      raise ArgumentError, "Expected a 48-bit MAC address or 24-bit OUI"
+      raise ArgumentError, "expected a 48-bit MAC address or 24-bit OUI"
     end
     
     <<integer::big-unsigned-size(size)>>
@@ -317,7 +317,7 @@ defmodule MACAddr do
   If this function can't find `addr` or OUI in the string, you'll get an ArgumentError:
   
       iex> MACAddr.parse("Hideous anecdote", :hex)
-      ** (ArgumentError) Expected a 6- or 12-digit hex string.
+      ** (ArgumentError) expected a 6- or 12-digit hex string
           (macaddr) lib/macaddr.ex:205: MACAddr.parse/1
          
   …but it errs on the side of leniency:
@@ -349,7 +349,7 @@ defmodule MACAddr do
     
     num_digits = String.length(hex)
     unless num_digits == 6 or num_digits == 12 do
-      raise ArgumentError, "Expected a 6- or 12-digit hex string."
+      raise ArgumentError, "expected a 6- or 12-digit hex string"
     end
     
     hex
