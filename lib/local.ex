@@ -92,6 +92,8 @@ defmodule MACAddr.Local do
   end
   
   defp interface_to_addr(interface) do
-    interface_to_hwaddr(interface) |> :erlang.list_to_binary
+    interface
+      |> interface_to_hwaddr
+      |> :erlang.list_to_binary
   end
 end

@@ -375,7 +375,7 @@ defmodule MACAddr do
     
         :erlang.list_to_binary(bytes)
       {:error, {_, _, {:illegal, char}}, _} ->
-        raise ArgumentError, "#{string} contains an illegal character, '#{IO.inspect(char)}'"
+        raise ArgumentError, "#{string} contains one or more illegal characters, starting with '#{char}'"
     end
   end
   defp do_parse(string, :oid) do
